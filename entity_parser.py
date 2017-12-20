@@ -729,25 +729,25 @@ def start_parsing(tick_interval):
 
 if __name__ == '__main__':
     '''
-    Run this with "python entity_parser.py [2] [3] [4] [5] [6]"
+    Run this with "python entity_parser.py [1] [2] [3] [4] [5]"
     Input files required (3):
-    2. game info -> game starting ticks, entities team and names
-    3. combat log -> damage, heal, modifier, xp, gold, game_state
-    4. entity change -> all sort of property changes
+    1. game info -> game starting ticks, entities team and names
+    2. combat log -> damage, heal, modifier, xp, gold, game_state
+    3. entity change -> all sort of property changes
 
     Output files (2):
-    5. Sample X_df
-    6. Parsed events 
+    4. Sample X_df
+    5. Parsed events 
     '''
 
-    if len(sys.argv) != 7:
+    if len(sys.argv) != 6:
         print("Wrong parameters supplied. Exiting...")
         exit(1)
 
     # read files
-    lifestate_log = pd.read_csv(sys.argv[2])
-    property_log = pd.read_csv(sys.argv[3])
-    combat_log = pd.read_csv(sys.argv[4])
+    lifestate_log = pd.read_csv(sys.argv[1])
+    property_log = pd.read_csv(sys.argv[2])
+    combat_log = pd.read_csv(sys.argv[3])
     print("Loading files completed")
 
     # load them
@@ -762,11 +762,11 @@ if __name__ == '__main__':
 
     # Save X_df
     df = pd.DataFrame(all_snapshots, columns=all_snapshots[0].keys())
-    df.to_csv(sys.argv[5])
+    df.to_csv(sys.argv[4])
     print("Saving X_df completed")
 
     # Save Y
     df_events = pd.DataFrame(events, columns=['tick', 'event', 'primary_target', 'primary_target_idx',
                                               'secondary_target', 'secondary_target_idx'])
-    df_events.to_csv(sys.argv[6])
+    df_events.to_csv(sys.argv[5])
     print("Saving Y completed")

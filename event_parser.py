@@ -118,21 +118,21 @@ def get_event_values(tick):
 
 if __name__ == '__main__':
     """
-    Run this with "python event_parser.py [2] [3] [4]"
+    Run this with "python event_parser.py [1] [2] [3]"
     Input files required (2):
-    2. X_df: hero position, etc
-    3. Parsed events
+    1. X_df: hero position, etc
+    2. Parsed events
     
     Output files (1):
-    4. Y
+    3. Y
     """
 
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 4:
         print("Wrong parameters supplied. Exiting...")
         exit(1)
 
-    X_df = pd.read_csv(sys.argv[2])
-    parsed_events_df = pd.read_csv(sys.argv[3])
+    X_df = pd.read_csv(sys.argv[1])
+    parsed_events_df = pd.read_csv(sys.argv[2])
 
     # parse events
     events = []
@@ -160,6 +160,6 @@ if __name__ == '__main__':
         y.append(get_event_values(tick))
 
     df_y = pd.DataFrame(y, columns=y[0].keys())
-    df_y.to_csv(sys.argv[4])
+    df_y.to_csv(sys.argv[3])
 
 
