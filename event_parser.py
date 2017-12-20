@@ -51,9 +51,9 @@ value_parameter = [
     ("damage", "hero", "roshan", 1, 60, 60),  # hero x roshan damage
     ("damage", "hero", float('nan'), 1, 60, 60),
     ("death", "hero", "hero", 60, 150, 120),  # hero x hero death
-    ("death", "hero", "tower", 40, 60, 60),  # hero x tower death
+    ("death", "hero", "tower", 40, 120, 120),  # hero x tower death
     ("death", "hero", "creep", 2, 60, 60),  # hero x creep death
-    ("death", "hero", "neutral", 6, 60, 60),  # hero x neutral death
+    ("death", "hero", "neutral", 6, 75, 75),  # hero x neutral death
     ("death", "roshan", "hero", 70, 150, 120),  # hero x roshan death
     ("death", "tower", "hero", 40, 120, 90),
 ]

@@ -13,8 +13,12 @@ class Event:
         self.name_2 = name_2
 
         # compute constants
-        self.pre_lam = -math.log(CONST_EPS/max_value)/ (pre_ticks)
-        self.post_lam = -math.log(CONST_EPS/max_value)/ (post_ticks)
+        light = 2
+        offset_size = 0.15
+        self.pre_offset = pre_ticks * offset_size
+        self.post_offset = post_ticks * offset_size
+        self.pre_lam = -math.log(CONST_EPS/max_value)/ ((pre_ticks * 0.8) * light)
+        self.post_lam = -math.log(CONST_EPS/max_value)/ ((post_ticks * 0.8) * light)
 
 
     def calculate_value(self, tick, method="decay"):
@@ -25,7 +29,11 @@ class Event:
             return tick >= self.tick - self.pre_ticks and tick <= self.tick + self.post_ticks
 
         if (method == "decay"):
-            res =  decay(self.post_lam, tick - self.tick) if tick > self.tick else decay(self.pre_lam, self.tick - tick)
+            if ((tick >= self.tick - self.pre_offset) and (tick <= self.tick + self.post_offset)):
+                res = self.max_value
+            else:
+                res =  decay(self.post_lam, tick - self.tick) if tick > self.tick else decay(self.pre_lam, self.tick - tick)
+
             if (res > CONST_EPS):
                 return res
         elif in_range(tick):
@@ -45,18 +53,19 @@ class Event:
 
 
 if __name__ == '__main__':
-    # import matplotlib.pyplot as plt
-    #
-    # hero_kill = Event(200, 60, 150, 120, 0, 0)
-    # neutral_kill = Event(210, 2, 60, 60, 0, 0)
-    #
-    # hero_kill_vals = [hero_kill.calculate_value(i, "decay") for i in range(50, 330, 5)]
-    # neutral_kill_vals = [neutral_kill.calculate_value(i, "decay") * 10 for i in range(50, 330, 5)]
-    #
-    # plt.plot(hero_kill_vals, c='r')
-    # plt.plot(neutral_kill_vals, c='b')
-    #
-    # plt.show()
+    import matplotlib.pyplot as plt
+
+    hero_kill = Event(200, 60, 150, 120, 0, 0)
+    tower_kill = Event(230, 40, 120, 120, 0, 0)
+
+    hero_kill_vals = [hero_kill.calculate_value(i, "decay") for i in range(50, 330, 5)]
+    neutral_kill_vals = [tower_kill.calculate_value(i, "decay") for i in range(50, 330, 5)]
+
+
+    plt.plot(hero_kill_vals, c='r')
+    plt.plot(neutral_kill_vals, c='b')
+
+    plt.show()
     exit(0)
     # print("Kill vs neutral death")
     # for i in range(50, 330, 5):
