@@ -525,7 +525,7 @@ def process_property_log(log):
 
     Handles
     For hero: (max) health, (max) mana, XY, level, KDA, NW
-    For buildings and roshan: X, Y, health, max_health
+    For buildings and roshan: X_df, Y, health, max_health
     Not included: neutrals, creeps, summons
 
     :param log: single lifestate log instance
@@ -548,7 +548,7 @@ def process_property_log(log):
         if log['event'] == 'tower':
             ent = towers[index_to_array[log['index']]]
 
-        if 'X' in log['property']:
+        if 'X_df' in log['property']:
             ent.set_position(x=log['value'])
         if 'Y' in log['property']:
             ent.set_position(y=log['value'])
@@ -586,7 +586,7 @@ def process_property_log(log):
                 hero.set_health(max_health=log['value'])
             if 'iCurrentLevel' in log['property']:
                 hero.set_level(level=log['value'])
-            if 'X' in log['property']:
+            if 'X_df' in log['property']:
                 hero.set_position(x=log['value'])
             if 'Y' in log['property']:
                 hero.set_position(y=log['value'])
@@ -736,11 +736,11 @@ if __name__ == '__main__':
     4. entity change -> all sort of property changes
 
     Output files (2):
-    5. Sample X
+    5. Sample X_df
     6. Parsed events 
     '''
 
-    if len(sys.argv) != 6:
+    if len(sys.argv) != 7:
         print("Wrong parameters supplied. Exiting...")
         exit(1)
 
@@ -760,10 +760,10 @@ if __name__ == '__main__':
     all_snapshots = start_parsing(15)
     print("Parsing completed")
 
-    # Save X
+    # Save X_df
     df = pd.DataFrame(all_snapshots, columns=all_snapshots[0].keys())
     df.to_csv(sys.argv[5])
-    print("Saving X completed")
+    print("Saving X_df completed")
 
     # Save Y
     df_events = pd.DataFrame(events, columns=['tick', 'event', 'primary_target', 'primary_target_idx',

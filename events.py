@@ -45,8 +45,20 @@ class Event:
 
 
 if __name__ == '__main__':
-    event = Event(10, 10, 5, 5)
-
-    for i in range(-2, 20):
-        print(i, event.calculate_value(i, "decay"))
+    # import matplotlib.pyplot as plt
+    #
+    # hero_kill = Event(200, 60, 150, 120, 0, 0)
+    # neutral_kill = Event(210, 2, 60, 60, 0, 0)
+    #
+    # hero_kill_vals = [hero_kill.calculate_value(i, "decay") for i in range(50, 330, 5)]
+    # neutral_kill_vals = [neutral_kill.calculate_value(i, "decay") * 10 for i in range(50, 330, 5)]
+    #
+    # plt.plot(hero_kill_vals, c='r')
+    # plt.plot(neutral_kill_vals, c='b')
+    #
+    # plt.show()
+    exit(0)
+    # print("Kill vs neutral death")
+    # for i in range(50, 330, 5):
+    #     print(i, hero_kill.calculate_value(i, "decay"), neutral_kill.calculate_value(i, "decay") * 10)
 

@@ -4,20 +4,58 @@ import pandas as pd
 from tqdm import tqdm
 
 from events import Event
+import sys
+
+"""
+Death
+1. Hero x hero (hero killed other hero)
+2. Creep x hero (LOL territory)
+3. Tower x hero
+4. Neutral x hero
+5. Roshan x hero
+6. Hero x creep
+7. Hero x tower
+8. Hero x neutral
+9. Hero x roshan
+
+
+Damage
+Interaction handled:
+1. Hero x hero (hero give damage to other hero)
+2. Creep x hero (creep give damage to a hero)
+3. Tower x hero
+4. Neutral x hero
+5. Roshan x hero
+6. Hero x creep
+7. Hero x tower
+8. Hero x neutral
+9. Hero x hero
+10. Hero x roshan
+
+Order of importance (hero to ...)
+KILL
+Hero D, Roshan kill hero, tower kill hero, Roshan D, Tower D, Neutral D, Creep D, 
+60      60                60               60        40       7          2
+
+DAMAGE
+Hero, tower, creep, neutral, roshan, self hurt
+3     2      1      2        3       1
+
+"""
 
 value_parameter = [
-    ("damage", "hero", "hero", 2, 60, 60),  # hero x hero damage
+    ("damage", "hero", "hero", 3, 60, 60),  # hero x hero damage
     ("damage", "hero", "tower", 2, 60, 60),  # hero x tower damage
-    ("damage", "hero", "creep", 2, 60, 60),  # hero x neutral damage
-    ("damage", "hero", "neutral", 2, 60, 60),  # hero x neutral damage
-    ("damage", "hero", "roshan", 2, 60, 60),  # hero x roshan damage
-    ("damage", "hero", float('nan'), 2, 60, 60),
-    ("death", "hero", "hero", 15, 150, 120),  # hero x hero death
-    ("death", "hero", "tower", 10, 60, 60),  # hero x tower death
+    ("damage", "hero", "creep", 1, 60, 60),  # hero x creep damage
+    ("damage", "hero", "neutral", 3, 60, 60),  # hero x neutral damage
+    ("damage", "hero", "roshan", 1, 60, 60),  # hero x roshan damage
+    ("damage", "hero", float('nan'), 1, 60, 60),
+    ("death", "hero", "hero", 60, 150, 120),  # hero x hero death
+    ("death", "hero", "tower", 40, 60, 60),  # hero x tower death
     ("death", "hero", "creep", 2, 60, 60),  # hero x creep death
-    ("death", "hero", "neutral", 3, 60, 60),  # hero x neutral death
-    ("death", "roshan", "hero", 12, 60, 60),  # hero x roshan death
-    ("death", "tower", "hero", 10, 60, 60),
+    ("death", "hero", "neutral", 6, 60, 60),  # hero x neutral death
+    ("death", "roshan", "hero", 70, 150, 120),  # hero x roshan death
+    ("death", "tower", "hero", 40, 120, 90),
 ]
 
 def get_value_param(log):
@@ -79,10 +117,26 @@ def get_event_values(tick):
     return res
 
 if __name__ == '__main__':
-    df = pd.read_csv('sample_parsed_events.csv')
+    """
+    Run this with "python event_parser.py [2] [3] [4]"
+    Input files required (2):
+    2. X_df: hero position, etc
+    3. Parsed events
+    
+    Output files (1):
+    4. Y
+    """
 
+    if len(sys.argv) != 5:
+        print("Wrong parameters supplied. Exiting...")
+        exit(1)
+
+    X_df = pd.read_csv(sys.argv[2])
+    parsed_events_df = pd.read_csv(sys.argv[3])
+
+    # parse events
     events = []
-    for i, row in tqdm(df.iterrows()):
+    for i, row in tqdm(parsed_events_df.iterrows()):
         rowd = dict(row)
 
         val = get_value_param(rowd)
@@ -98,18 +152,14 @@ if __name__ == '__main__':
 
         events.append(Event(rowd['tick'], val[3], val[4], val[5], name_1, name_2))
 
-    # run every ticks
-    X = pd.read_csv('sample_X.csv')
-
-    ticks = list(X['tick'])
-
+    # produce Y values
     print("Ready to calculate!")
-
+    ticks = list(X_df['tick'])
     y = []
     for tick in tqdm(ticks):
         y.append(get_event_values(tick))
 
     df_y = pd.DataFrame(y, columns=y[0].keys())
-    df_y.to_csv("sample_y.csv")
+    df_y.to_csv(sys.argv[4])
 
 
