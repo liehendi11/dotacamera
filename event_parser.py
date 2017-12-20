@@ -58,6 +58,8 @@ value_parameter = [
     ("death", "tower", "hero", 40, 120, 90),
 ]
 
+tick_interval = 15
+
 def get_value_param(log):
     for val in value_parameter:
         if val[0] == log['event'] and val[1] == log['primary_target'] and val[2] == log['secondary_target']:
@@ -104,7 +106,7 @@ def get_event_values(tick):
 
     for event in events:
         if (tick < event.min_tick) or (tick > event.max_tick): continue
-        val_dict = event.get_values(tick)
+        val_dict = event.get_future_values(tick, tick_interval)
 
         for k in val_dict:
             if k in res:

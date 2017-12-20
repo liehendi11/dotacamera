@@ -14,7 +14,7 @@ class Event:
 
         # compute constants
         light = 2
-        offset_size = 0.15
+        offset_size = 0.1
         self.pre_offset = pre_ticks * offset_size
         self.post_offset = post_ticks * offset_size
         self.pre_lam = -math.log(CONST_EPS/max_value)/ ((pre_ticks * 0.8) * light)
@@ -47,6 +47,17 @@ class Event:
         res[self.name_1] = val
         if (self.name_2 != None):
             res[self.name_2] = val/2.0
+
+        return res
+
+    def get_future_values(self, tick, tick_interval, method='decay'):
+        res = {}
+        for i in range(tick, tick+tick_interval):
+            t_res = self.get_values(i, method)
+
+            res[self.name_1] = t_res[self.name_1]
+            if (self.name_2 != None):
+                res[self.name_2] = t_res[self.name_2]
 
         return res
 

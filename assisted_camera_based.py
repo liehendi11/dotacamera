@@ -35,9 +35,10 @@ def select_hero(hero, tick):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv('sample_y.csv')
+    df = pd.read_csv('test_Y.csv')
 
-    delay = (1.0 / 30) * 12
+    tick_interval = 15
+    delay = (1.0 / 30) * tick_interval
 
     for i, row in df.iterrows():
         if 'hero' in row['target']:

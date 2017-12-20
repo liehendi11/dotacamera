@@ -44,7 +44,8 @@ def load_basic_info(lifestate):
     :return: None
     """
 
-    global starting_tick, roshan, index_to_array, barracks, shrines, ancients, heroes, couriers, towers, tower_indexes, used_unit_indexes
+    global starting_tick, roshan, index_to_array, barracks, shrines, ancients, heroes, couriers, towers,\
+        tower_indexes, used_unit_indexes
 
     for i, row in lifestate.iterrows():
         rowd = dict(row)
@@ -693,6 +694,8 @@ def start_parsing(tick_interval):
     global logs, ending_tick, starting_tick
     sorted_logs = deque(sorted(logs, key=lambda tup: tup[0]))
 
+    all_snapshots = []
+
     # pre-parsing
     while (len(sorted_logs) > 0) and (sorted_logs[0][0] <= starting_tick):
         tick, log_type, log = sorted_logs.popleft()
@@ -703,7 +706,7 @@ def start_parsing(tick_interval):
         if log_type == 'lifestate':
             process_lifestate_log(log)
 
-    all_snapshots = [{**get_snapshot(tick), **get_interval_snapshot(tick, tick_interval),
+        all_snapshots = [{**get_snapshot(tick), **get_interval_snapshot(tick, tick_interval),
                       **get_interval_snapshot(tick, tick_interval * 2)}]
 
     for next_tick in range(starting_tick + tick_interval, ending_tick + tick_interval, tick_interval):
@@ -722,7 +725,8 @@ def start_parsing(tick_interval):
             if log_type == 'combat':
                 process_combat_log(log)
 
-        all_snapshots.append({**get_snapshot(tick), **get_interval_snapshot(tick, tick_interval)})
+        all_snapshots.append({**get_snapshot(tick), **get_interval_snapshot(tick, tick_interval),
+                      **get_interval_snapshot(tick, tick_interval * 2)})
 
     return all_snapshots
 
@@ -745,10 +749,15 @@ if __name__ == '__main__':
         exit(1)
 
     # read files
-    lifestate_log = pd.read_csv(sys.argv[1])
-    property_log = pd.read_csv(sys.argv[2])
-    combat_log = pd.read_csv(sys.argv[3])
+    lifestate_log = pd.read_csv(sys.argv[1], index_col=False)
+    property_log = pd.read_csv(sys.argv[2], index_col=False)
+    combat_log = pd.read_csv(sys.argv[3], index_col=False)
     print("Loading files completed")
+
+    # cast ticks into ints
+    lifestate_log['tick'] = lifestate_log['tick'].astype(int)
+    property_log['tick'] = property_log['tick'].astype(int)
+    combat_log['tick'] = combat_log['tick'].astype(int)
 
     # load them
     load_basic_info(lifestate_log)
