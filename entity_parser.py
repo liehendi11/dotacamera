@@ -123,7 +123,8 @@ def load_basic_info(lifestate):
                 heroes[player_id].set_health(row['health'], row['max_health'])
                 index_to_array[row['index']] = player_id
 
-                hero_name = "npc_dota_hero_{}".format('_'.join(row['class'].split('_')[3:]).lower())
+                # hero_name = "npc_dota_hero_{}".format('_'.join(row['class'].split('_')[3:]).lower())
+                hero_name = CLASS_TO_COMBAT_MAPPING[row['class']]
                 combat_log_name_to_array[hero_name] = player_id
 
         if row['class'] == COURIER:
@@ -328,10 +329,13 @@ def process_combat_heal(log):
 
 def process_combat_modifier(log):
     """
-    DEPRECATED. Process a single combat log modifier. Easier to parse through entity change
+    Process a single combat log modifier.
     :param log: Single combat log modifier instance
     :return: None
     """
+    if not isinstance(log['target'], str):
+        return
+
     if 'hero' in log['target']:
         target_name = log['target']
         if not target_name in combat_log_name_to_array: return
@@ -339,14 +343,17 @@ def process_combat_modifier(log):
         target_idx = combat_log_name_to_array[target_name]
         target_hero = heroes[target_idx]  # type: Hero
 
-        # stun and bashes
+        # non-hero buffs
         if not log['inflictor'] in MODIFIER_MAP: return
 
+        effect = MODIFIER_MAP[log['inflictor']]
+        if (effect == 'none'): return
+
         if log['event'] == 'modifier_add':
-            target_hero.add_modifier(MODIFIER_MAP[log['inflictor']])
-            events.append((log['tick'], MODIFIER_MAP[log['inflictor']], "hero", target_idx))
+            target_hero.add_modifier(effect)
+            events.append((log['tick'], effect, "hero", target_idx))
         else:
-            target_hero.remove_modifier(MODIFIER_MAP[log['inflictor']])
+            target_hero.remove_modifier(effect)
             #########################################
 
 
@@ -474,6 +481,8 @@ def process_combat_log(log):
         process_combat_heal(log)
     if log['event'] == 'death':
         process_combat_death(log)
+    if 'modifier' in log['event']:
+        process_combat_modifier(log)
     return
 
 
@@ -706,15 +715,12 @@ def start_parsing(tick_interval):
         if log_type == 'lifestate':
             process_lifestate_log(log)
 
-        all_snapshots = [{**get_snapshot(tick), **get_interval_snapshot(tick, tick_interval),
-                      **get_interval_snapshot(tick, tick_interval * 2)}]
+    all_snapshots = [{**get_snapshot(starting_tick), **get_interval_snapshot(starting_tick, tick_interval),
+                  **get_interval_snapshot(starting_tick, tick_interval * 2)}]
 
-    for next_tick in range(starting_tick + tick_interval, ending_tick + tick_interval, tick_interval):
-        while (len(sorted_logs) > 0) and (sorted_logs[0][0] <= next_tick):
+    for cur_tick in range(starting_tick + tick_interval, ending_tick, tick_interval):
+        while (len(sorted_logs) > 0) and (sorted_logs[0][0] <= cur_tick):
             tick, log_type, log = sorted_logs.popleft()
-            if tick > ending_tick:
-                all_snapshots.append({**get_snapshot(tick), **get_interval_snapshot(tick, tick_interval)})
-                break
 
             if log_type == 'property':
                 process_property_log(log)
@@ -725,14 +731,27 @@ def start_parsing(tick_interval):
             if log_type == 'combat':
                 process_combat_log(log)
 
-        all_snapshots.append({**get_snapshot(tick), **get_interval_snapshot(tick, tick_interval),
-                      **get_interval_snapshot(tick, tick_interval * 2)})
+        all_snapshots.append({**get_snapshot(cur_tick), **get_interval_snapshot(cur_tick, tick_interval),
+                      **get_interval_snapshot(cur_tick, tick_interval * 2)})
 
     return all_snapshots
 
-def fix_warnings(df):
+
+
+def fix_warnings(df, df_type='lifestate'):
     df = df[df['tick'].apply(lambda x: x.isnumeric())]
-    df['tick'] = df['tick'].astype(int)
+    df.loc[:,'tick'] = df['tick'].astype(int)
+
+    def cast_to_ints(df, columns):
+        for col in columns:
+            df.loc[:, col] = df[col].astype(int)
+        return df
+
+    if (df_type == 'lifestate'):
+        df = cast_to_ints(df, columns=['index', 'unit_player_index', 'team_num'])
+    if (df_type == 'property'):
+        df = cast_to_ints(df, columns=['index'])
+
     return df
 
 
@@ -757,12 +776,13 @@ if __name__ == '__main__':
     lifestate_log = pd.read_csv(sys.argv[1], index_col=False)
     property_log = pd.read_csv(sys.argv[2], index_col=False)
     combat_log = pd.read_csv(sys.argv[3], index_col=False)
-    print("Loading files completed")
 
     # cast ticks into ints
-    lifestate_log = fix_warnings(lifestate_log)
-    property_log = fix_warnings(property_log)
-    combat_log = fix_warnings(combat_log)
+    lifestate_log = fix_warnings(lifestate_log, df_type='lifestate')
+    property_log = fix_warnings(property_log, df_type='property')
+    combat_log = fix_warnings(combat_log, df_type='combat')
+
+    print("Loading files completed")
 
     # load them
     load_basic_info(lifestate_log)
@@ -776,11 +796,13 @@ if __name__ == '__main__':
 
     # Save X_df
     df = pd.DataFrame(all_snapshots, columns=all_snapshots[0].keys())
-    df.to_csv(sys.argv[4])
+    df.set_index('tick', inplace=True)
+    df.to_csv(sys.argv[4], )
     print("Saving X_df completed")
 
     # Save Y
     df_events = pd.DataFrame(events, columns=['tick', 'event', 'primary_target', 'primary_target_idx',
                                               'secondary_target', 'secondary_target_idx'])
+    df_events.set_index('tick', inplace=True)
     df_events.to_csv(sys.argv[5])
     print("Saving Y completed")

@@ -1,6 +1,5 @@
 import math
 
-
 class Entity:
     def __init__(self, name, type, team):
         self.name = name
@@ -93,31 +92,6 @@ class Entity:
                 break
 
 
-
-        # dealt_damage_details = {
-        #     "hero_0": 0,
-        #     "hero_1": 0,
-        #     "hero_2": 0,
-        #     "hero_3": 0,
-        #     "hero_4": 0,
-        #     "creep": 0,
-        #     "building": 0,
-        #     "neutral": 0,
-        #     "roshan": 0
-        # }
-        # if (self.team == 2):
-        #     dealt_damage_details = {
-        #         "hero_5": 0,
-        #         "hero_6": 0,
-        #         "hero_7": 0,
-        #         "hero_8": 0,
-        #         "hero_9": 0,
-        #         "creep": 0,
-        #         "building": 0,
-        #         "neutral": 0,
-        #         "roshan": 0
-        #     }
-
         for damage in reversed(self.dealt_damage):
             if damage[0] >= (current_tick - tick_interval + 1):
                 total_dealt_damage += damage[2]
@@ -125,49 +99,12 @@ class Entity:
             else:
                 break
 
-        # heal
-
-
-        # received_heal_details = {
-        #     "hero_0": 0,
-        #     "hero_1": 0,
-        #     "hero_2": 0,
-        #     "hero_3": 0,
-        #     "hero_4": 0,
-        # }
-        # if (self.team == 3):
-        #     received_heal_details = {
-        #         "hero_5": 0,
-        #         "hero_6": 0,
-        #         "hero_7": 0,
-        #         "hero_8": 0,
-        #         "hero_9": 0,
-        #     }
-
         for heal in reversed(self.received_heal):
             if heal[0] >= (current_tick - tick_interval + 1):
                 total_received_heal += heal[2]
                 received_heal_details[heal[1]] += heal[2]
             else:
                 break
-
-
-
-        # dealt_heal_details = {
-        #     "hero_0": 0,
-        #     "hero_1": 0,
-        #     "hero_2": 0,
-        #     "hero_3": 0,
-        #     "hero_4": 0,
-        # }
-        # if (self.team == 3):
-        #     dealt_heal_details = {
-        #         "hero_5": 0,
-        #         "hero_6": 0,
-        #         "hero_7": 0,
-        #         "hero_8": 0,
-        #         "hero_9": 0,
-        #     }
 
         for heal in reversed(self.dealt_heal):
             if heal[0] >= (current_tick - tick_interval + 1):
@@ -223,18 +160,25 @@ class Hero(Entity):
 
         # modifiers_stack
         self.modifiers_stack = {
-            'silence': 0,
-            'stun': 0,
-            'disarm': 0,
-            'magic_immune': 0,
-            'hex': 0,
-            'mute': 0,
-            'break': 0,
-            'slow': 0,
-            'haste': 0,
-            'dd': 0,
-            'invis': 0,
-            'invis_visible': 0
+            "slow": 0,
+            "stun": 0,
+            "burn": 0,
+            "invis": 0,
+            "regen": 0,
+            "root": 0,
+            "invulnerable": 0,
+            "silence": 0,
+            "disarm": 0,
+            "invis_reveal": 0,
+            "haste": 0,
+            "blind": 0,
+            "magic_immune": 0,
+            "break": 0,
+            "mute": 0,
+            "hex": 0,
+            "arcane": 0,
+            "smoke": 0,
+            "double_damage": 0
         }
 
         # resource and actions
@@ -261,7 +205,6 @@ class Hero(Entity):
 
     def remove_modifier(self, type):
         self.modifiers_stack[type] -= 1
-
 
     def set_stats(self, stat, value):
         self.stats[stat] = value
