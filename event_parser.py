@@ -46,9 +46,9 @@ Hero, tower, creep, neutral, roshan, self hurt
 value_parameter = [
     ("damage", "hero", "hero", 3, 60, 60),  # hero x hero damage
     ("damage", "hero", "tower", 2, 60, 60),  # hero x tower damage
-    ("damage", "hero", "creep", 1, 60, 60),  # hero x creep damage
+    ("damage", "hero", "creep", 1, 30, 30),  # hero x creep damage
     ("damage", "hero", "neutral", 3, 60, 60),  # hero x neutral damage
-    ("damage", "hero", "roshan", 1, 60, 60),  # hero x roshan damage
+    ("damage", "hero", "roshan", 3, 60, 60),  # hero x roshan damage
     ("damage", "hero", float('nan'), 1, 60, 60),
     ("death", "hero", "hero", 60, 150, 120),  # hero x hero death
     ("death", "hero", "tower", 40, 120, 120),  # hero x tower death
