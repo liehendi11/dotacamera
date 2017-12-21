@@ -8,6 +8,7 @@ from collections import deque
 from itertools import chain
 
 import pandas as pd
+import numpy as np
 
 from dota_constants import *
 from entities import *
@@ -737,10 +738,13 @@ def start_parsing(tick_interval):
     return all_snapshots
 
 
+from pandas.api.types import is_string_dtype
 
 def fix_warnings(df, df_type='lifestate'):
-    df = df[df['tick'].apply(lambda x: x.isnumeric())]
-    df.loc[:,'tick'] = df['tick'].astype(int)
+
+    if is_string_dtype(df.tick):
+        df = df[df.tick.apply(lambda x: x.isnumeric())]
+        df.loc[:,'tick'] = df.tick.astype(int)
 
     def cast_to_ints(df, columns):
         for col in columns:
