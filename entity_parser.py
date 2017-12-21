@@ -730,6 +730,11 @@ def start_parsing(tick_interval):
 
     return all_snapshots
 
+def fix_warnings(df):
+    df = df[df['tick'].apply(lambda x: x.isnumeric())]
+    df['tick'] = df['tick'].astype(int)
+    return df
+
 
 if __name__ == '__main__':
     '''
@@ -755,9 +760,9 @@ if __name__ == '__main__':
     print("Loading files completed")
 
     # cast ticks into ints
-    lifestate_log['tick'] = lifestate_log['tick'].astype(int)
-    property_log['tick'] = property_log['tick'].astype(int)
-    combat_log['tick'] = combat_log['tick'].astype(int)
+    lifestate_log = fix_warnings(lifestate_log)
+    property_log = fix_warnings(property_log)
+    combat_log = fix_warnings(combat_log)
 
     # load them
     load_basic_info(lifestate_log)
