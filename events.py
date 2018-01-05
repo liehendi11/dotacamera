@@ -1,5 +1,6 @@
 CONST_EPS = 0.0000001
 import math
+from dota_constants import EVENT_NAME_MAPPING
 
 class Event:
     def __init__(self, tick, max_value, pre_ticks, post_ticks, name_1, name_2):
@@ -42,11 +43,13 @@ class Event:
         return 0
 
     def get_values(self, tick, method='decay'):
-        res = {}
+        res = [0, 0]
+
+        # res = {}
         val = self.calculate_value(tick, method)
-        res[self.name_1] = val
-        if (self.name_2 != None):
-            res[self.name_2] = val/2.0
+        res[0] = val
+        if isinstance(self.name_2, str) and (not self.name_2 in ('creep', 'neutral')):
+            res[1] = val/2.0
 
         return res
 
@@ -55,9 +58,9 @@ class Event:
         for i in range(tick, tick+tick_interval):
             t_res = self.get_values(i, method)
 
-            res[self.name_1] = t_res[self.name_1]
-            if (self.name_2 != None):
-                res[self.name_2] = t_res[self.name_2]
+            res[EVENT_NAME_MAPPING[self.name_1]] = t_res[0]
+            if isinstance(self.name_2, str) and (not self.name_2 in ('creep', 'neutral')):
+                res[EVENT_NAME_MAPPING[self.name_2]] = t_res[1]
 
         return res
 
@@ -78,7 +81,3 @@ if __name__ == '__main__':
 
     plt.show()
     exit(0)
-    # print("Kill vs neutral death")
-    # for i in range(50, 330, 5):
-    #     print(i, hero_kill.calculate_value(i, "decay"), neutral_kill.calculate_value(i, "decay") * 10)
-

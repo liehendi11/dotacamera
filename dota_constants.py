@@ -158,3 +158,46 @@ _class_combat = pd.read_csv('resources/class_combat_mapping.csv')
 
 CLASS_TO_COMBAT_MAPPING = {_class_combat.loc[i, 'class_name']: _class_combat.loc[i, 'combat_name']
                            for i in range(len(_class_combat))}
+
+
+TEAM_MAPPING = {
+    2: "radiant",
+    3: "dire",
+    4: "neutral"
+}
+
+EVENT_NAME_MAPPING = {
+    "hero_0": 0,
+    "hero_1": 1,
+    "hero_2": 2,
+    "hero_3": 3,
+    "hero_4": 4,
+    "hero_5": 5,
+    "hero_6": 6,
+    "hero_7": 7,
+    "hero_8": 8,
+    "hero_9": 9,
+    "roshan": 10,
+    "tower_0": 11,
+    "tower_1": 12,
+    "tower_2": 13,
+    "tower_3": 14,
+    "tower_4": 15,
+    "tower_5": 16,
+    "tower_6": 17,
+    "tower_7": 18,
+    "tower_8": 19,
+    "tower_9": 20,
+    "tower_10": 21,
+    "tower_11": 22,
+    "tower_12": 23,
+    "tower_13": 24,
+    "tower_14": 25,
+    "tower_15": 26,
+    "tower_16": 27,
+    "tower_17": 28,
+    "tower_18": 29,
+    "tower_19": 30,
+    "tower_20": 31,
+    "tower_21": 32
+}

@@ -24,6 +24,7 @@ roshan = None  # type: Roshan
 
 # mapping between clarity index to actual entity index
 index_to_array = {}
+index_to_array_type = {}
 combat_log_name_to_array = {}
 
 # starting and ending tick for parsing
@@ -72,6 +73,7 @@ def load_basic_info(lifestate):
                 towers[p + j].set_position(row['x'], row['y'])
                 towers[p + j].set_health(row['health'], row['max_health'])
                 index_to_array[row['index']] = p + j
+                index_to_array_type[row['index']] = 'tower'
 
             # document used unit indexes to ensure no duplicate towers
             used_unit_indexes.add(unit_player_index)
@@ -85,6 +87,7 @@ def load_basic_info(lifestate):
                 barracks[p].set_position(row['x'], row['y'])
                 barracks[p].set_health(row['health'], row['max_health'])
                 index_to_array[row['index']] = p
+                index_to_array_type[row['index']] = 'barrack'
 
             # document used unit indexes to ensure no duplicate barracks
             used_unit_indexes.add(unit_player_index)
@@ -96,6 +99,7 @@ def load_basic_info(lifestate):
             roshan.set_position(row['x'], row['y'])
             roshan.set_health(row['health'], row['max_health'])
             index_to_array[row['index']] = 0
+            index_to_array_type[row['index']] = 'roshan'
 
         if row['class'] == ANCIENT:
             p = 0 if row['team_num'] == RADIANT else 1
@@ -103,6 +107,7 @@ def load_basic_info(lifestate):
             ancients[p].set_position(row['x'], row['y'])
             ancients[p].set_health(row['health'], row['max_health'])
             index_to_array[row['index']] = p
+            index_to_array_type[row['index']] = 'ancient'
 
         if row['class'] == SHRINE:
             unit_player_index = row['unit_player_index']
@@ -114,6 +119,7 @@ def load_basic_info(lifestate):
             shrines[p + j].set_position(row['x'], row['y'])
             shrines[p + j].set_health(row['health'], row['max_health'])
             index_to_array[row['index']] = p + j
+            index_to_array_type[row['index']] = 'shrine'
 
         if HERO in row['class']:
             player_id = row['unit_player_index']
@@ -123,6 +129,7 @@ def load_basic_info(lifestate):
                 heroes[player_id].set_position(row['x'], row['y'])
                 heroes[player_id].set_health(row['health'], row['max_health'])
                 index_to_array[row['index']] = player_id
+                index_to_array_type[row['index']] = 'hero'
 
                 # hero_name = "npc_dota_hero_{}".format('_'.join(row['class'].split('_')[3:]).lower())
                 hero_name = CLASS_TO_COMBAT_MAPPING[row['class']]
@@ -138,6 +145,7 @@ def load_basic_info(lifestate):
 
                 couriers.append(new_cour)
                 index_to_array[row['index']] = x
+                index_to_array_type[row['index']] = 'courier'
 
 
 def load_combat_log(combat_logs):
@@ -169,7 +177,6 @@ def load_property_log(property_log):
         rowd = dict(row)
         logs.append((rowd['tick'], 'property', rowd))
 
-
 def process_combat_damage(log):
     """
     Process a single combat damage log
@@ -189,114 +196,113 @@ def process_combat_damage(log):
     :param log: Single combat damage log
     :return: None
     """
+    source_team = TEAM_MAPPING[log['source_team']] if not pd.isnull(log['source_team']) else ''
+    target_team = TEAM_MAPPING[log['target_team']] if not pd.isnull(log['target_team']) else ''
+    source_name = log['dmg_source']
+    # dmg_source_name = log['source']
+    target_name = log['target']
+
 
     # 1. hero x hero
-    if ('hero' in log['source']) and ('hero' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-        target_name = log['target'].replace(" (illusion)", "")
+    if ('hero' in source_name) and ('hero' in target_name):
+        if log['is_target_illu']:  # doesn't care about illusion x illusion damage
+            return
 
+        # FOR NOW: read all incoming damage, only record damage dealt to heroes
         source_idx = combat_log_name_to_array[source_name]
-        target_idx = combat_log_name_to_array[target_name]
-
         source_hero = heroes[source_idx]  # type: Hero
+        source_hero.add_dealt_damage(log['tick'], target_team, log['value'])
+
+        target_idx = combat_log_name_to_array[target_name]
         target_hero = heroes[target_idx]  # type: Hero
 
-        source_hero.add_dealt_damage(log['tick'], 'hero_{}'.format(target_idx), log['value'])
-        target_hero.add_received_damage(log['tick'], 'hero_{}'.format(source_idx), log['value'])
-        events.append((log['tick'], "damage", "hero", target_idx, "hero", source_idx))
+        target_hero.add_received_damage(log['tick'], source_team, log['value'])
+        events.append((log['tick'], "hero_to_hero_damage", "hero", target_idx, "hero", source_idx))
 
-    # 2. creep x hero
-    if 'creep' in log['source'] and ('hero' in log['target']):
-        target_name = log['target']
-
+    # 2. creep x hero, disregard illusion
+    if 'creep' in source_name and ('hero' in target_name) and (not log['is_target_illu']):
         if not target_name in combat_log_name_to_array: return
+
         target_idx = combat_log_name_to_array[target_name]
         target_hero = heroes[target_idx]  # type: Hero
 
         target_hero.add_received_damage(log['tick'], 'creep', log['value'])
-        events.append((log['tick'], "damage", "hero", target_idx))
+        events.append((log['tick'], "creep_to_hero_damage", "hero", target_idx))
 
-    # 3. tower x hero
-    if 'tower' in log['source'] and ('hero' in log['target']):
-        target_name = log['target']
-        source_name = log['source']
-
+    # 3. tower x hero, disregard illusion
+    if 'tower' in source_name and ('hero' in target_name) and (not log['is_target_illu']):
         if not target_name in combat_log_name_to_array: return
+
         target_idx = combat_log_name_to_array[target_name]
         source_idx = TOWER_COMBAT_NAME[source_name]
         target_hero = heroes[target_idx]  # type: Hero
 
         target_hero.add_received_damage(log['tick'], 'building', log['value'])
 
-        events.append((log['tick'], "damage", "hero", target_idx, "tower", source_idx))
+        events.append((log['tick'], "tower_to_hero_damage", "hero", target_idx, "tower", source_idx))
 
     # 4. neutral x hero
-    if 'neutral' in log['source'] and ('hero' in log['target']):
-        target_name = log['target']
-
+    if 'neutral' in source_name and ('hero' in target_name) and (not log['is_target_illu']):
         if not target_name in combat_log_name_to_array: return
+
         target_idx = combat_log_name_to_array[target_name]
         target_hero = heroes[target_idx]  # type: Hero
 
         target_hero.add_received_damage(log['tick'], 'neutral', log['value'])
-        events.append((log['tick'], "damage", "hero", target_idx, "neutral", None))
+        events.append((log['tick'], "neutral_to_hero_damage", "hero", target_idx, "neutral", None))
 
     # 5. roshan x hero
-    if 'roshan' in log['source'] and ('hero' in log['target']):
-        target_name = log['target']
-
+    if 'roshan' in source_name and ('hero' in target_name) and (not log['is_target_illu']):
         if not target_name in combat_log_name_to_array: return
+
         target_idx = combat_log_name_to_array[target_name]
         target_hero = heroes[target_idx]  # type: Hero
 
         target_hero.add_received_damage(log['tick'], 'roshan', log['value'])
-        events.append((log['tick'], "damage", "roshan", None, "hero", target_idx))
+        events.append((log['tick'], "roshan_to_hero_damage", "roshan", None, "hero", target_idx))
 
     #########################################3
 
     # 6. hero x creep
-    if 'hero' in log['source'] and ('creep' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-
+    if 'hero' in source_name and ('creep' in target_name):
         if not source_name in combat_log_name_to_array: return
+
         source_idx = combat_log_name_to_array[source_name]
         source_hero = heroes[source_idx]  # type: Hero
 
         source_hero.add_dealt_damage(log['tick'], 'creep', log['value'])
-        events.append((log['tick'], "damage", "hero", source_idx, "creep", None))
+        events.append((log['tick'], "hero_to_creep_damage", "hero", source_idx, "creep", None))
 
     # 7. hero x tower
-    if 'hero' in log['source'] and ('tower' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-
+    if 'hero' in source_name and ('tower' in target_name):
         if not source_name in combat_log_name_to_array: return
         source_idx = combat_log_name_to_array[source_name]
         source_hero = heroes[source_idx]  # type: Hero
 
+        target_idx = TOWER_COMBAT_NAME[target_name]
+
         source_hero.add_dealt_damage(log['tick'], 'building', log['value'])
-        events.append((log['tick'], "damage", "hero", source_idx, "tower", None))
+        events.append((log['tick'], "hero_to_tower_damage", "hero", source_idx, "tower", target_idx))
 
     # 8. hero x neutral
-    if 'hero' in log['source'] and ('neutral' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-
+    if 'hero' in source_name and ('neutral' in target_name) and (not log['is_source_illu']):
         if not source_name in combat_log_name_to_array: return
+
         source_idx = combat_log_name_to_array[source_name]
         source_hero = heroes[source_idx]  # type: Hero
 
         source_hero.add_dealt_damage(log['tick'], 'neutral', log['value'])
-        events.append((log['tick'], "damage", "hero", source_idx, "neutral", None))
+        events.append((log['tick'], "hero_to_neutral_damage", "hero", source_idx, "neutral", None))
 
     # 9. hero x roshan
-    if 'hero' in log['source'] and ('roshan' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-
+    if 'hero' in source_name and ('roshan' in target_name) and (not log['is_source_illu']):
         if not source_name in combat_log_name_to_array: return
+
         source_idx = combat_log_name_to_array[source_name]
         source_hero = heroes[source_idx]  # type: Hero
 
         source_hero.add_dealt_damage(log['tick'], 'roshan', log['value'])
-        events.append((log['tick'], "damage", "hero", source_idx, "roshan", None))
+        events.append((log['tick'], "hero_to_roshan_damage", "hero", source_idx, "roshan", None))
 
 
 def process_combat_heal(log):
@@ -308,10 +314,14 @@ def process_combat_heal(log):
     :return: None
     """
 
+    source_team = TEAM_MAPPING[log['source_team']] if not pd.isnull(log['source_team']) else ''
+    target_team = TEAM_MAPPING[log['target_team']] if not pd.isnull(log['target_team']) else ''
+    source_name = log['source']
+    target_name = log['target']
+
     # hero x hero
-    if ('hero' in log['source']) and ('hero' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-        target_name = log['target'].replace(" (illusion)", "")
+    if ('hero' in source_name) and ('hero' in target_name):
+        if log['is_source_illu'] or log['is_target_illu']: return
 
         if not source_name in combat_log_name_to_array: return
         if not target_name in combat_log_name_to_array: return
@@ -325,7 +335,7 @@ def process_combat_heal(log):
         source_hero.add_dealt_heal(log['tick'], 'hero_{}'.format(target_idx), log['value'])
         target_hero.add_received_heal(log['tick'], 'hero_{}'.format(source_idx), log['value'])
 
-        events.append((log['tick'], "damage", "hero", target_idx, "hero", source_idx))
+        # events.append((log['tick'], "damage", "hero", target_idx, "hero", source_idx))
 
 
 def process_combat_modifier(log):
@@ -334,11 +344,12 @@ def process_combat_modifier(log):
     :param log: Single combat log modifier instance
     :return: None
     """
-    if not isinstance(log['target'], str):
+
+    target_name = log['target']
+    if not isinstance(target_name, str):  # blank targets
         return
 
-    if 'hero' in log['target']:
-        target_name = log['target']
+    if 'hero' in log['target'] and (not log['is_target_illu']):
         if not target_name in combat_log_name_to_array: return
 
         target_idx = combat_log_name_to_array[target_name]
@@ -352,7 +363,7 @@ def process_combat_modifier(log):
 
         if log['event'] == 'modifier_add':
             target_hero.add_modifier(effect)
-            events.append((log['tick'], effect, "hero", target_idx))
+            events.append((log['tick'], 'modifier_{}'.format(effect), "hero", target_idx))
         else:
             target_hero.remove_modifier(effect)
             #########################################
@@ -377,88 +388,43 @@ def process_combat_death(log):
     :return: None
     """
 
-    # 1. hero x hero
-    if ('hero' in log['source']) and ('hero' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-        target_name = log['target'].replace(" (illusion)", "")
+    # not interested in illusion deaths
+    if log['is_target_illu']: return
 
-        source_idx = combat_log_name_to_array[source_name]
+    source_name = log['dmg_source']
+    if not source_name in combat_log_name_to_array: return
+    source_idx = combat_log_name_to_array[source_name]
+
+    target_name = log['target']
+
+    # 1. all heroes
+    if 'hero' in target_name:
         target_idx = combat_log_name_to_array[target_name]
-
-        events.append((log['tick'], "death", "hero", target_idx, "hero", source_idx))
-
-    # 2. creep x hero
-    if 'creep' in log['source'] and ('hero' in log['target']):
-        target_name = log['target']
-
-        if not target_name in combat_log_name_to_array: return
-        target_idx = combat_log_name_to_array[target_name]
-
-        events.append((log['tick'], "death", "hero", target_idx))
-
-    # 3. tower x hero
-    if 'tower' in log['source'] and ('hero' in log['target']):
-        target_name = log['target']
-        source_name = log['source']
-
-        if not target_name in combat_log_name_to_array: return
-        target_idx = combat_log_name_to_array[target_name]
-        source_idx = TOWER_COMBAT_NAME[source_name]
-
-        events.append((log['tick'], "death", "hero", target_idx, "tower", source_idx))
-
-    # 4. neutral x hero
-    if 'neutral' in log['source'] and ('hero' in log['target']):
-        target_name = log['target']
-
-        if not target_name in combat_log_name_to_array: return
-        target_idx = combat_log_name_to_array[target_name]
-
-        events.append((log['tick'], "death", "hero", target_idx, "neutral", None))
-
-    # 5. roshan x hero
-    if 'roshan' in log['source'] and ('hero' in log['target']):
-        target_name = log['target']
-
-        if not target_name in combat_log_name_to_array: return
-        target_idx = combat_log_name_to_array[target_name]
-        events.append((log['tick'], "death", "hero", target_idx, "roshan", None))
+        if 'hero' in source_name:
+            events.append((log['tick'], "hero_death", "hero", target_idx, "hero", source_idx))
+        else:
+            events.append((log['tick'], "hero_death", "hero", target_idx))
 
     # 6. hero x creep
-    if 'hero' in log['source'] and ('creep' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-
-        if not source_name in combat_log_name_to_array: return
-        source_idx = combat_log_name_to_array[source_name]
-
-        events.append((log['tick'], "death", "hero", source_idx, "creep", None))
+    if 'hero' in source_name and ('creep' in target_name):
+        events.append((log['tick'], "creep_death", "hero", source_idx, "creep", None))
 
     # 7. hero x tower
-    if 'hero' in log['source'] and ('tower' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-        target_name = log['target']
-
-        if not source_name in combat_log_name_to_array: return
+    if 'tower' in target_name:
         target_idx = TOWER_COMBAT_NAME[target_name]
-        source_idx = combat_log_name_to_array[source_name]
-        events.append((log['tick'], "death", "tower", target_idx, "hero", source_idx))
+
+        if 'hero' in source_name:
+            events.append((log['tick'], "tower_death", "tower", target_idx, "hero", source_idx))
+        else:
+            events.append((log['tick'], "tower_death", "tower", target_idx))
 
     # 8. hero x neutral
-    if 'hero' in log['source'] and ('neutral' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-
-        if not source_name in combat_log_name_to_array: return
-        source_idx = combat_log_name_to_array[source_name]
-
-        events.append((log['tick'], "death", "hero", source_idx, "neutral", None))
+    if 'hero' in source_name and ('neutral' in target_name):
+        events.append((log['tick'], "neutral_death", "hero", source_idx, "neutral", None))
 
     # 9. hero x roshan
-    if 'hero' in log['source'] and ('roshan' in log['target']):
-        source_name = log['source'].replace(" (illusion)", "")
-
-        if not source_name in combat_log_name_to_array: return
-        source_idx = combat_log_name_to_array[source_name]
-        events.append((log['tick'], "death", "roshan", None, "hero", source_idx))
+    if 'hero' in source_name and ('roshan' in target_name):
+        events.append((log['tick'], "roshan_death", "roshan", None, "hero", source_idx))
 
     return
 
@@ -505,6 +471,8 @@ def process_lifestate_log(log):
         # determine what type it is first
         if 'Roshan' in log['class']:
             ent = roshan
+        elif log['index'] not in index_to_array:
+            return
         else:
             idx = index_to_array[log['index']]
 
@@ -519,6 +487,7 @@ def process_lifestate_log(log):
         if 'Courier' in log['class']:
             ent = couriers[idx]
         if 'Hero' in log['class']:
+            if index_to_array_type[log['index']] != 'hero': return 1
             ent = heroes[idx]
 
         if log['action'] == 'spawn':
@@ -588,6 +557,8 @@ def process_property_log(log):
 
         if 'Unit_Hero_' in log['class']:
             if not log['index'] in index_to_array: return 1
+            if index_to_array_type[log['index']] != 'hero': return
+
             idx = index_to_array[log['index']]
             hero = heroes[idx]
 
@@ -763,9 +734,10 @@ if __name__ == '__main__':
     '''
     Run this with "python entity_parser.py [1] [2] [3] [4] [5]"
     Input files required (3):
-    1. game info -> game starting ticks, entities team and names
+    1. lifestate -> game starting ticks, entities team and names
+    2. property change -> all sort of property changes
     2. combat log -> damage, heal, modifier, xp, gold, game_state
-    3. entity change -> all sort of property changes
+    
 
     Output files (2):
     4. Sample X_df
@@ -801,7 +773,7 @@ if __name__ == '__main__':
     # Save X_df
     df = pd.DataFrame(all_snapshots, columns=all_snapshots[0].keys())
     df.set_index('tick', inplace=True)
-    df.to_csv(sys.argv[4], )
+    df.to_csv(sys.argv[4])
     print("Saving X_df completed")
 
     # Save Y

@@ -65,24 +65,16 @@ class Entity:
         total_dealt_heal = 0
 
         received_damage_details = {
-            "hero_0": 0,
-            "hero_1": 0,
-            "hero_2": 0,
-            "hero_3": 0,
-            "hero_4": 0,
-            "hero_5": 0,
-            "hero_6": 0,
-            "hero_7": 0,
-            "hero_8": 0,
-            "hero_9": 0,
+            "radiant": 0,
+            "dire": 0,
             "creep": 0,
             "building": 0,
             "neutral": 0,
             "roshan": 0
         }
         dealt_damage_details = received_damage_details.copy()
-        received_heal_details = received_damage_details.copy()
-        dealt_heal_details = received_damage_details.copy()
+        # received_heal_details = received_damage_details.copy()
+        # dealt_heal_details = received_damage_details.copy()
 
         for damage in reversed(self.received_damage):
             if damage[0] >= (current_tick - tick_interval + 1):
@@ -102,14 +94,14 @@ class Entity:
         for heal in reversed(self.received_heal):
             if heal[0] >= (current_tick - tick_interval + 1):
                 total_received_heal += heal[2]
-                received_heal_details[heal[1]] += heal[2]
+                # received_heal_details[heal[1]] += heal[2]
             else:
                 break
 
         for heal in reversed(self.dealt_heal):
             if heal[0] >= (current_tick - tick_interval + 1):
                 total_dealt_heal += heal[2]
-                dealt_heal_details[heal[1]] += heal[2]
+                # dealt_heal_details[heal[1]] += heal[2]
             else:
                 break
 
@@ -119,9 +111,9 @@ class Entity:
             "total_dealt_damage": total_dealt_damage,
             "dealt_damage": dealt_damage_details,
             "total_received_heal": total_received_heal,
-            "received_heal": received_heal_details,
+            # "received_heal": received_heal_details,
             "total_dealt_heal": total_dealt_heal,
-            "dealt_heal": dealt_heal_details,
+            # "dealt_heal": dealt_heal_details,
         }
         return res
 
