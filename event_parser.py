@@ -45,7 +45,9 @@ event_values = {
     "hero_to_roshan_damage": (2, 60, 60),
     "hero_to_tower_damage": (4, 60, 60),
     "modifier_arcane": (0, 0, 0),
+    "modifier_disarm": (0, 0, 0),
     "modifier_burn": (0, 0, 0),
+    "modifier_mute": (0, 0, 0),
     "modifier_double_damage": (0, 0, 0),
     "modifier_haste": (0, 0, 0),
     "modifier_invis": (0, 0, 0),
@@ -56,6 +58,8 @@ event_values = {
     "modifier_root": (0, 0, 0),
     "modifier_silence": (0, 0, 0),
     "modifier_slow": (0, 0, 0),
+    "modifier_break": (0, 0, 0),
+    "modifier_hex": (0, 0, 0),
     "modifier_smoke": (5, 60, 60),
     "modifier_stun": (0, 0, 0),
     "modifier_blind": (0, 0, 0),
@@ -65,6 +69,7 @@ event_values = {
     "roshan_to_hero_damage": (2, 60, 60),
     "tower_death": (60, 120, 90),
     "tower_to_hero_damage": (1.5, 60, 60)
+
 }
 
 tick_interval = 15

@@ -715,10 +715,9 @@ def start_parsing(tick_interval):
 from pandas.api.types import is_string_dtype
 
 def fix_warnings(df, df_type='lifestate'):
-
-    if is_string_dtype(df.tick):
-        df = df[df.tick.apply(lambda x: x.isnumeric())]
-        df.loc[:,'tick'] = df.tick.astype(int)
+    df['tick'] = df['tick'].astype(str)
+    df = df[df.tick.apply(lambda x: x.isnumeric())]
+    df['tick'] = df.tick.astype(int)
 
     def cast_to_ints(df, columns):
         for col in columns:
