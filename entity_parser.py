@@ -13,6 +13,8 @@ import numpy as np
 from dota_constants import *
 from entities import *
 
+from EventParser import EventParser
+
 # Initial variables
 heroes = [None] * 10  # type: List[Hero]
 couriers = []  # type: List[Courier]
@@ -513,6 +515,7 @@ def process_property_log(log):
     """
 
     global ancients, index_to_array, heroes
+    # _event_set = {'ancient', 'barracks', 'courier', 'roshan', 'tower'}
 
     if log['event'] in ('ancient', 'barracks', 'courier', 'roshan', 'tower'):
         ent = None  # type: Entity
@@ -742,8 +745,8 @@ if __name__ == '__main__':
     
 
     Output files (2):
-    4. Sample X_df
-    5. Parsed events 
+    4. X_df
+    5. Y
     '''
 
     if len(sys.argv) != 6:
@@ -769,18 +772,25 @@ if __name__ == '__main__':
     print("Loading logs to queue completed")
 
     # start parsing
-    all_snapshots = start_parsing(15)
+    tick_interval = 15
+    all_snapshots = start_parsing(tick_interval)
     print("Parsing completed")
 
     # Save X_df
     df = pd.DataFrame(all_snapshots, columns=all_snapshots[0].keys())
+    X_ticks = list(df['tick'])
     df.set_index('tick', inplace=True)
     df.to_csv(sys.argv[4])
     print("Saving X_df completed")
 
-    # Save Y
+    # Ready for Y
     df_events = pd.DataFrame(events, columns=['tick', 'event', 'primary_target', 'primary_target_idx',
                                               'secondary_target', 'secondary_target_idx'])
-    df_events.set_index('tick', inplace=True)
-    df_events.to_csv(sys.argv[5])
+
+    # df_events.set_index('tick', inplace=True)
+
+    eparser = EventParser(X_ticks, df_events, tick_interval)
+    df_y = eparser.run()
+
+    df_y.to_csv(sys.argv[5])
     print("Saving Y completed")

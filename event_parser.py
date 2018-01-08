@@ -58,13 +58,13 @@ event_values = {
     "modifier_slow": (0, 0, 0),
     "modifier_smoke": (5, 60, 60),
     "modifier_stun": (0, 0, 0),
+    "modifier_blind": (0, 0, 0),
     "neutral_death": (3, 60, 60),
     "neutral_to_hero_damage": (0.7, 30, 30),
     "roshan_death": (75, 150, 120),
     "roshan_to_hero_damage": (2, 60, 60),
     "tower_death": (60, 120, 90),
     "tower_to_hero_damage": (1.5, 60, 60)
-
 }
 
 tick_interval = 15
