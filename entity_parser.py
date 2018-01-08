@@ -726,6 +726,8 @@ def fix_warnings(df, df_type='lifestate'):
         df = cast_to_ints(df, columns=['index', 'unit_player_index', 'team_num'])
     if (df_type == 'property'):
         df = cast_to_ints(df, columns=['index'])
+    # if (df_type == 'combat'):
+    #     df = cast_to_ints(df, columns=['source_team'])
 
     return df
 

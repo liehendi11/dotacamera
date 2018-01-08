@@ -161,6 +161,7 @@ CLASS_TO_COMBAT_MAPPING = {_class_combat.loc[i, 'class_name']: _class_combat.loc
 
 
 TEAM_MAPPING = {
+    0: "self",
     2: "radiant",
     3: "dire",
     4: "neutral"
