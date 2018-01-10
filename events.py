@@ -110,9 +110,7 @@ class EventParser:
     def __init__(self, ticks, events, tick_interval):
         self.ticks = ticks
         self.parsed_events_df = events
-
         self.tick_interval = tick_interval
-
         self.events = []
 
 
@@ -138,7 +136,6 @@ class EventParser:
 
     def run(self):
         # parse events
-        events = []
         for i, row in tqdm(self.parsed_events_df.iterrows()):
             rowd = dict(row)
 
@@ -154,7 +151,7 @@ class EventParser:
             if not pd.isnull(rowd['secondary_target_idx']):
                 name_2 += "_{}".format(int(rowd['secondary_target_idx']))
 
-            events.append(Event(rowd['tick'], val[0], val[1], val[2], name_1, name_2))
+            self.events.append(Event(rowd['tick'], val[0], val[1], val[2], name_1, name_2))
 
         # produce Y values
         print("Ready to calculate!")
