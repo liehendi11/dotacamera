@@ -7,13 +7,9 @@ import sys
 from collections import deque
 from itertools import chain
 
-import pandas as pd
-import numpy as np
-
 from dota_constants import *
 from entities import *
-
-from EventParser import EventParser
+from events import EventParser
 
 # Initial variables
 heroes = [None] * 10  # type: List[Hero]
@@ -712,8 +708,6 @@ def start_parsing(tick_interval):
     return all_snapshots
 
 
-from pandas.api.types import is_string_dtype
-
 def fix_warnings(df, df_type='lifestate'):
     df['tick'] = df['tick'].astype(str)
     df = df[df.tick.apply(lambda x: x.isnumeric())]
@@ -736,7 +730,7 @@ def fix_warnings(df, df_type='lifestate'):
 
 if __name__ == '__main__':
     '''
-    Run this with "python entity_parser.py [1] [2] [3] [4] [5]"
+    Run this with "python parser.py [1] [2] [3] [4] [5]"
     Input files required (3):
     1. lifestate -> game starting ticks, entities team and names
     2. property change -> all sort of property changes
