@@ -60,12 +60,20 @@ class Event:
 
     def get_future_values(self, tick, tick_interval, method='decay'):
         res = {}
+
         for i in range(tick, tick+tick_interval):
             t_res = self.get_values(i, method)
 
-            res[EVENT_NAME_MAPPING[self.name_1]] = t_res[0]
+            if EVENT_NAME_MAPPING[self.name_1] in res:
+                res[EVENT_NAME_MAPPING[self.name_1]] = max(t_res[0], res[EVENT_NAME_MAPPING[self.name_1]])
+            else:
+                res[EVENT_NAME_MAPPING[self.name_1]] = t_res[0]
+
             if isinstance(self.name_2, str) and (not self.name_2 in ('creep', 'neutral')):
-                res[EVENT_NAME_MAPPING[self.name_2]] = t_res[1]
+                if EVENT_NAME_MAPPING[self.name_2] in res:
+                    res[EVENT_NAME_MAPPING[self.name_2]] = max(t_res[1], res[EVENT_NAME_MAPPING[self.name_2]])
+                else:
+                    res[EVENT_NAME_MAPPING[self.name_2]] = t_res[1]
 
         return res
 
@@ -114,7 +122,7 @@ class EventParser:
         self.events = []
 
 
-    def get_event_values(self, tick):
+    def get_event_values(self, tick, method='max'):
         res = [0] * 33
 
         for event in self.events:
@@ -122,11 +130,10 @@ class EventParser:
             val_dict = event.get_future_values(tick, self.tick_interval)
 
             for k in val_dict:
-                res[k] += val_dict[k]
-
-        # softmax function
-        # res = np.exp(res)
-        # res = list(res / np.sum(res))
+                if method == 'sum':
+                    res[k] += val_dict[k]
+                else:
+                    res[k] = max(res[k], val_dict[k])
 
         # max target and such
         res.extend([np.argmax(res), tick])
@@ -171,8 +178,9 @@ if __name__ == '__main__':
     hero_kill = Event(200, 60, 150, 120, 0, 0)
     tower_kill = Event(230, 40, 120, 120, 0, 0)
 
-    hero_kill_vals = [hero_kill.calculate_value(i, "decay") for i in range(50, 330, 5)]
-    neutral_kill_vals = [tower_kill.calculate_value(i, "decay") for i in range(50, 330, 5)]
+    # hero_kill.get_future_values(50, 5, 'decay')
+    hero_kill_vals = [max([hero_kill.get_values(i+j, "decay") for j in range(5)]) for i in range(50, 330, 5)]
+    neutral_kill_vals = [max([tower_kill.get_values(i+j, "decay") for j in range(5)]) for i in range(50, 330, 5)]
 
 
     plt.plot(hero_kill_vals, c='r')
