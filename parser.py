@@ -527,7 +527,7 @@ def process_property_log(log):
         if log['event'] == 'tower':
             ent = towers[index_to_array[log['index']]]
 
-        if 'X_df' in log['property']:
+        if 'X' in log['property']:
             ent.set_position(x=log['value'])
         if 'Y' in log['property']:
             ent.set_position(y=log['value'])
@@ -542,7 +542,6 @@ def process_property_log(log):
         if ('PlayerResource' in log['class']) or \
                 (log['class'] in ('CDOTA_DataDire', 'CDOTA_DataRadiant')):
             idx = int(log['property'].split('.')[1])
-
             hero = heroes[idx] # type: Hero
 
             if 'Kills' in log['property']:
@@ -567,7 +566,7 @@ def process_property_log(log):
                 hero.set_health(max_health=log['value'])
             if 'iCurrentLevel' in log['property']:
                 hero.set_level(level=log['value'])
-            if 'X_df' in log['property']:
+            if 'X' in log['property']:
                 hero.set_position(x=log['value'])
             if 'Y' in log['property']:
                 hero.set_position(y=log['value'])
