@@ -1,0 +1,14 @@
+<application>
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="afd41a90-41de-436c-b8f4-439f54018608" name="scraper" url="http://ec2-54-206-75-205.ap-southeast-2.compute.amazonaws.com">
+        <fileTransfer host="ec2-54-206-75-205.ap-southeast-2.compute.amazonaws.com" port="22" privateKey="C:\Users\Hendi\Documents\rm_deployment.ppk" rootFolder="/home/ubuntu" accessType="SFTP" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</application>
